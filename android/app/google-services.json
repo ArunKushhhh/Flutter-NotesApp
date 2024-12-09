@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1016910124305",
+    "project_id": "mynotes-austen-e6205",
+    "storage_bucket": "mynotes-austen-e6205.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1016910124305:android:6425517ac236306a4aa8b0",
+        "android_client_info": {
+          "package_name": "com.hello.mynotes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3x8bRKGQZUObFy26zuBp4zb2HxP4nrHU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
