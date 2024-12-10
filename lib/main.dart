@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'firebase_options.dart';
+import 'package:mynotes/firebase_options.dart';
+import 'package:mynotes/views/login_view.dart';
+import 'package:mynotes/views/register_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,42 +17,27 @@ void main() {
         useMaterial3: true,
       ),
       home: const HomePage(),
+      routes: {
+        '/login/': (context) => const LoginView(),
+        '/register/': (context) => const RegisterView()
+      },
     ),
   );
 }
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  //late: although the variable does not have a value now but i promise to assign it a value before it is used.
-  late final TextEditingController _email;
-  late final TextEditingController _password;
-
-  @override
-  void initState() {
-    _email = TextEditingController();
-    _password = TextEditingController();
-    super.initState();
-  }
-
-  // everytime the homepage goes out of the memory, we need to dispose these values
-  @override
-  void dispose() {
-    _email.dispose();
-    _password.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Register"),
+        title: const Text("Home Page"),
+        backgroundColor: Colors.blue,
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+        ),
       ),
       body: FutureBuilder(
         future: Firebase.initializeApp(
@@ -59,42 +46,63 @@ class _HomePageState extends State<HomePage> {
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.done:
-              return Column(
-                children: [
-                  TextField(
-                    controller: _email,
-                    enableSuggestions: false,
-                    autocorrect: false,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(hintText: "Enter E-mail"),
-                  ),
-                  TextField(
-                    controller: _password,
-                    obscureText: true,
-                    enableSuggestions: false,
-                    autocorrect: false,
-                    decoration:
-                        const InputDecoration(hintText: "Enter Password"),
-                  ),
-                  TextButton(
-                      onPressed: () async {
-                        // await Firebase.initializeApp(
-                        //    options: DefaultFirebaseOptions.currentPlatform,
-                        //  );
-                        final email = _email.text;
-                        final password = _password.text;
-                        final UserCredential = await FirebaseAuth.instance
-                            .createUserWithEmailAndPassword(
-                                email: email, password: password);
-                      },
-                      child: const Text("Register")),
-                ],
-              );
+              // //getting the current user
+              // final user = FirebaseAuth.instance.currentUser;
+              // print(user);
+
+              // //emailVerified is a boolean value that indicates whether the user's email has been verified i.e. the user has clicked on the verification link sent to their email
+              // //the condition checks: 1. if the user is logged in, the condition is true
+              // //2. if no user is logged in (user is null), or if the user's email is not verified(emailVerified is false), the condition is false
+              // if (user?.emailVerified ?? false) {
+              //   // print("You are a verified user");
+              //   return const Text("Done");
+              // } else {
+              //   // print("You need to verify your email");
+
+              //   //we are using navigator here to push _VerifyEmailView into the hompage if the user is not verified
+              //   //However it is not suggested to push something into a FutureBuilder
+
+              //   // Navigator.of(context).push(MaterialPageRoute(
+              //   //     builder: (context) => const _VerifyEmailView()));
+
+              //   //after repalcing scaffold with column for a builder to be returned, we now need to replace the navigator with returning only _VerifyEmailView();
+              //   return const _VerifyEmailView();
+              //   //hence, instead of pushing a whole new screen into out app, we are just pushing content of the new screen into the current screen.
+              // }
+
+              return const LoginView();
+
             default:
               return const Text("Loading...");
           }
         },
       ),
+    );
+  }
+}
+
+class _VerifyEmailView extends StatefulWidget {
+  const _VerifyEmailView({super.key});
+
+  @override
+  State<_VerifyEmailView> createState() => _VerifyEmailViewState();
+}
+
+class _VerifyEmailViewState extends State<_VerifyEmailView> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text("Please Verify your  Email Addresss"),
+        TextButton(
+            onPressed: () async {
+              final user = FirebaseAuth.instance.currentUser;
+              // user.sendEmailVerification();
+              await user?.sendEmailVerification();
+              //if we actually want the future to be executed, we need to await on it
+            },
+            child: const Text("Send Email Verification"))
+      ],
     );
   }
 }
