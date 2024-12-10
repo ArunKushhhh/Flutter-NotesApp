@@ -41,6 +41,7 @@ class _RegisterViewState extends State<RegisterView> {
       ),
       body: Column(
         children: [
+          // Email input field
           TextField(
             controller: _email,
             enableSuggestions: false,
@@ -48,6 +49,8 @@ class _RegisterViewState extends State<RegisterView> {
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(hintText: "Enter E-mail"),
           ),
+
+          //Password input field
           TextField(
             controller: _password,
             obscureText: true,
@@ -55,6 +58,8 @@ class _RegisterViewState extends State<RegisterView> {
             autocorrect: false,
             decoration: const InputDecoration(hintText: "Enter Password"),
           ),
+
+          // Register button
           TextButton(
               onPressed: () async {
                 // await Firebase.initializeApp(
@@ -79,6 +84,11 @@ class _RegisterViewState extends State<RegisterView> {
                 }
               },
               child: const Text("Register")),
+
+              // Already registed.. login button
+              TextButton(onPressed: () {
+                Navigator.of(context).pushNamedAndRemoveUntil('/login/', (route) => false);
+              }, child: const Text("Already registered? Login Here!")),
         ],
       ),
     );
