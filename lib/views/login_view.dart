@@ -1,5 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'dart:developer' as devtools show log;
+import 'package:mynotes/constants/routes.dart';
+import 'package:mynotes/utilities/show_error_diallog.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -68,18 +71,52 @@ class _LoginViewState extends State<LoginView> {
                   final userCredential = await FirebaseAuth.instance
                       .signInWithEmailAndPassword(
                           email: email, password: password);
-                  print(userCredential);
+                  devtools.log(userCredential.toString());
+                  // ignore: use_build_context_synchronously
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    notesRoute,
+                    (route) => false,
+                  );
                 }
                 //the type of excpetion is identified using the e.runtimeType method
                 on FirebaseAuthException catch (e) {
-                  // print(e.code);
+                  devtools.log(
+                      'FirebaseAuthException code: ${e.code}'); // Debugging
+
                   if (e.code == 'user-not-found') {
-                    print("User not found");
-                  } else if (e.code == 'invalid-credential') {
-                    print("Wrong Password- invalid login credentials");
                     // print(e.code);
+
+                    // Chapter: Error handling in LoginView
+                    await showErrorDialog(
+                      // devtools.log("User not found");
+                      // ignore: use_build_context_synchronously
+                      context,
+                      "User not found. Please check your email or register.",
+                    );
+                  } else if (e.code == 'invalid-credential') {
+                    // devtools.log(e.code.toString());
+                    // devtools.log("Wrong Password- invalid login credentials");
+
+                    await showErrorDialog(
+                      // ignore: use_build_context_synchronously
+                      context,
+                      "Wrong Password - Invalid login credentials",
+                    );
+                  } else {
+                    await showErrorDialog(
+                      // ignore: use_build_context_synchronously
+                      context,
+                      "Error: ${e.code}",
+                    );
                   }
+                } catch (e) {
+                  await showErrorDialog(
+                    // ignore: use_build_context_synchronously
+                    context,
+                    e.toString(),
+                  );
                 }
+
                 // catch (e) {
                 //   print("Something bad happended");
                 //   print(e.runtimeType);
@@ -93,7 +130,7 @@ class _LoginViewState extends State<LoginView> {
           TextButton(
               onPressed: () {
                 Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/register/',
+                  registerRoute,
                   (route) => false,
                 );
               },
