@@ -1,8 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 //show is used to import particular package
 import 'dart:developer' as devtools show log;
 import 'package:mynotes/constants/routes.dart';
+import 'package:mynotes/services/auth/auth_service.dart';
 
 enum MenuAction { logout, verifyEmail }
 
@@ -39,16 +40,25 @@ class _NotesViewState extends State<NotesView> {
                   final shouldLogout = await showLogoutDialog(context);
                   devtools.log(shouldLogout.toString());
                   if (shouldLogout) {
-                    await FirebaseAuth.instance.signOut();
+                    //commented in chap : migrating to auth service
+                    // await FirebaseAuth.instance.signOut();
+
+                    AuthService.firebase().logOut();
+
                     // ignore: use_build_context_synchronously
-                    Navigator.of(context)
-                        .pushNamedAndRemoveUntil(loginRoute, (_) => false);
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      loginRoute,
+                      (_) => false,
+                    );
                   }
                   break;
                 case MenuAction.verifyEmail:
-                  final user = FirebaseAuth.instance.currentUser;
+                  //commented in chap: migrating to auth services
+                  // final user = FirebaseAuth.instance.currentUser;
 
-                  if (user?.emailVerified ?? false) {
+                  final user = AuthService.firebase().currentUser;
+
+                  if (user?.isEmailVerified ?? false) {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text('Your Email is already Verified')));
                   } else {

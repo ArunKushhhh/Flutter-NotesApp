@@ -1,7 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 import 'package:mynotes/constants/routes.dart';
+import 'package:mynotes/services/auth/auth_exceptions.dart';
+import 'package:mynotes/services/auth/auth_service.dart';
 import 'package:mynotes/utilities/show_error_diallog.dart';
 
 class LoginView extends StatefulWidget {
@@ -68,13 +70,24 @@ class _LoginViewState extends State<LoginView> {
                 final email = _email.text;
                 final password = _password.text;
                 try {
-                  final userCredential = await FirebaseAuth.instance
-                      .signInWithEmailAndPassword(
-                          email: email, password: password);
-                  devtools.log(userCredential.toString());
+                  //chap: migrating to auth service
+                  // final userCredential = await FirebaseAuth.instance
+                  //     .signInWithEmailAndPassword(
+                  //         email: email, password: password);
+                  // devtools.log(userCredential.toString());\
+                  await AuthService.firebase().login(
+                    email: email,
+                    password: password,
+                  );
+
                   //before pushing the user to the main screen of the app, we need to ensure if the user is verified or not
-                  final user = FirebaseAuth.instance.currentUser;
-                  if (user?.emailVerified ?? false) {
+                  //Chap: migrating to auth service
+                  // final user = FirebaseAuth.instance.currentUser;
+
+                  final user = AuthService.firebase().currentUser;
+
+                  //changed emailVerified to isEmailVerified
+                  if (user?.isEmailVerified ?? false) {
                     //user's email is verified
                     // ignore: use_build_context_synchronously
                     Navigator.of(context).pushNamedAndRemoveUntil(
@@ -87,37 +100,60 @@ class _LoginViewState extends State<LoginView> {
                     Navigator.of(context).pushNamed(verifyEmailRoute);
                   }
                 }
+
                 //the type of excpetion is identified using the e.runtimeType method
-                on FirebaseAuthException catch (e) {
-                  devtools.log(
-                      'FirebaseAuthException code: ${e.code}'); // Debugging
 
-                  if (e.code == 'user-not-found') {
-                    // print(e.code);
+                // this code is commented in chap: migrating to auth services
+                // on FirebaseAuthException catch (e) {
+                //   devtools.log(
+                //       'FirebaseAuthException code: ${e.code}'); // Debugging
 
-                    // Chapter: Error handling in LoginView
-                    await showErrorDialog(
-                      // devtools.log("User not found");
-                      // ignore: use_build_context_synchronously
-                      context,
-                      "User not found. Please check your email or register.",
-                    );
-                  } else if (e.code == 'invalid-credential') {
-                    // devtools.log(e.code.toString());
-                    // devtools.log("Wrong Password- invalid login credentials");
+                //   if (e.code == 'user-not-found') {
+                //     // print(e.code);
 
-                    await showErrorDialog(
-                      // ignore: use_build_context_synchronously
-                      context,
-                      "Wrong Password - Invalid login credentials",
-                    );
-                  } else {
-                    await showErrorDialog(
-                      // ignore: use_build_context_synchronously
-                      context,
-                      "Error: ${e.code}",
-                    );
-                  }
+                //     // Chapter: Error handling in LoginView
+                //     await showErrorDialog(
+                //       // devtools.log("User not found");
+                //       // ignore: use_build_context_synchronously
+                //       context,
+                //       "User not found. Please check your email or register.",
+                //     );
+                //   } else if (e.code == 'invalid-credential') {
+                //     // devtools.log(e.code.toString());
+                //     // devtools.log("Wrong Password- invalid login credentials");
+
+                //     await showErrorDialog(
+                //       // ignore: use_build_context_synchronously
+                //       context,
+                //       "Wrong Password - Invalid login credentials",
+                //     );
+                //   } else {
+                //     await showErrorDialog(
+                //       // ignore: use_build_context_synchronously
+                //       context,
+                //       "Error: ${e.code}",
+                //     );
+                //   }
+                // }
+
+                //chap: migrating to auth services
+                on UserNotFoundAuthException {
+                  await showErrorDialog(
+                    context,
+                    "User not found. Please check your email or register.",
+                  );
+                } on InvalidCredentialAuthException {
+                  await showErrorDialog(
+                    // ignore: use_build_context_synchronously
+                    context,
+                    "Wrong Password - Invalid login credentials",
+                  );
+                } on GenericAuthException {
+                  await showErrorDialog(
+                    // ignore: use_build_context_synchronously
+                    context,
+                    "Authentication Error",
+                  );
                 } catch (e) {
                   await showErrorDialog(
                     // ignore: use_build_context_synchronously
