@@ -1,7 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 import 'package:mynotes/constants/routes.dart';
+import 'package:mynotes/services/auth/auth_exceptions.dart';
+import 'package:mynotes/services/auth/auth_service.dart';
 import 'package:mynotes/utilities/show_error_diallog.dart';
 
 class RegisterView extends StatefulWidget {
@@ -71,51 +73,93 @@ class _RegisterViewState extends State<RegisterView> {
                 final email = _email.text;
                 final password = _password.text;
                 try {
-                  final userCredential = await FirebaseAuth.instance
-                      .createUserWithEmailAndPassword(
-                          email: email, password: password);
-                  devtools.log(userCredential.toString());
+                  await AuthService.firebase().createUser(
+                    email: email,
+                    password: password,
+                  );
+                  //commented in chap : migrating to auth service
+                  // final userCredential = await FirebaseAuth.instance
+                  //     .createUserWithEmailAndPassword(
+                  //         email: email, password: password);
+                  // devtools.log(userCredential.toString());
 
                   //Chapter: Error handling in RegisterView
 
                   //it would be better to send the verification email as soon as the user registers instead of asking the user whether to  send it or not
-                  final user = FirebaseAuth.instance.currentUser;
-                  await user?.sendEmailVerification();
+
+                  //commented in chap : migrating to auth service
+                  // final user = FirebaseAuth.instance.currentUser;
+                  // Here firebase sends the email verification at the user level
+
+                  // await user?.sendEmailVerification();
+
+                  //chap: migrating to auth services:
+                  //we are asking out AuthService to send and email verification
+                  AuthService.firebase().sendEmailVerification();
 
                   // on succesful registration, navigate to verifyEmailView
                   // ignore: use_build_context_synchronously
                   Navigator.of(context).pushNamed(verifyEmailRoute);
-                } on FirebaseAuthException catch (e) {
-                  // print(e.code);
-                  if (e.code == 'weak-password') {
-                    devtools.log("Weak password");
-                    // Chapter: error handling in RegisterView
-                    await showErrorDialog(
-                      // ignore: use_build_context_synchronously
-                      context,
-                      "Weak Password. Please enter a strong password",
-                    );
-                  } else if (e.code == 'email-already-in-use') {
-                    devtools.log("Email already in use");
-                    await showErrorDialog(
-                      // ignore: use_build_context_synchronously
-                      context,
-                      "Email already in use. Please enter a new email",
-                    );
-                  } else if (e.code == 'invalid-email') {
-                    devtools.log("Invalid Email entered");
-                    await showErrorDialog(
-                      // ignore: use_build_context_synchronously
-                      context,
-                      "Invalid email",
-                    );
-                  } else {
-                    await showErrorDialog(
-                      // ignore: use_build_context_synchronously
-                      context,
-                      "Error: ${e.code}",
-                    );
-                  }
+                }
+
+                //commented in chap: migrating to Auth services
+                // on FirebaseAuthException catch (e) {
+                //   // print(e.code);
+                //   if (e.code == 'weak-password') {
+                //     devtools.log("Weak password");
+                //     // Chapter: error handling in RegisterView
+                //     await showErrorDialog(
+                //       // ignore: use_build_context_synchronously
+                //       context,
+                //       "Weak Password. Please enter a strong password",
+                //     );
+                //   } else if (e.code == 'email-already-in-use') {
+                //     devtools.log("Email already in use");
+                //     await showErrorDialog(
+                //       // ignore: use_build_context_synchronously
+                //       context,
+                //       "Email already in use. Please enter a new email",
+                //     );
+                //   } else if (e.code == 'invalid-email') {
+                //     devtools.log("Invalid Email entered");
+                //     await showErrorDialog(
+                //       // ignore: use_build_context_synchronously
+                //       context,
+                //       "Invalid email",
+                //     );
+                //   } else {
+                //     await showErrorDialog(
+                //       // ignore: use_build_context_synchronously
+                //       context,
+                //       "Error: ${e.code}",
+                //     );
+                //   }
+                // }
+
+                on WeakPasswordAuthException {
+                  await showErrorDialog(
+                    // ignore: use_build_context_synchronously
+                    context,
+                    "Weak Password. Please enter a strong password",
+                  );
+                } on EmailAlreadyInUseAuthException {
+                  await showErrorDialog(
+                    // ignore: use_build_context_synchronously
+                    context,
+                    "Email already in use. Please enter a new email",
+                  );
+                } on InvalidEmailAuthException {
+                  await showErrorDialog(
+                    // ignore: use_build_context_synchronously
+                    context,
+                    "Invalid email",
+                  );
+                } on GenericAuthException {
+                  await showErrorDialog(
+                    // ignore: use_build_context_synchronously
+                    context,
+                    "Authentication Error",
+                  );
                 } catch (e) {
                   await showErrorDialog(
                     // ignore: use_build_context_synchronously
