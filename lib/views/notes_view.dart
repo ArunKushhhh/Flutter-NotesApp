@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:developer' as devtools show log;
 import 'package:mynotes/constants/routes.dart';
 
-enum MenuAction { logout }
+enum MenuAction { logout, verifyEmail }
 
 class NotesView extends StatefulWidget {
   const NotesView({super.key});
@@ -18,14 +18,14 @@ class _NotesViewState extends State<NotesView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          tooltip: 'Show Snackbar',
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('This is a navigation mwnu')));
-          },
-        ),
+        // leading: IconButton(
+        //   icon: const Icon(Icons.menu),
+        //   tooltip: 'Show Snackbar',
+        //   onPressed: () {
+        //     ScaffoldMessenger.of(context).showSnackBar(
+        //         const SnackBar(content: Text('This is a navigation mwnu')));
+        //   },
+        // ),
         title: const Text("Notes"),
         backgroundColor: Colors.blue,
         titleTextStyle: const TextStyle(fontSize: 20, color: Colors.white),
@@ -45,6 +45,16 @@ class _NotesViewState extends State<NotesView> {
                         .pushNamedAndRemoveUntil(loginRoute, (_) => false);
                   }
                   break;
+                case MenuAction.verifyEmail:
+                  final user = FirebaseAuth.instance.currentUser;
+
+                  if (user?.emailVerified ?? false) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Your Email is already Verified')));
+                  } else {
+                    Navigator.of(context).pushNamed(verifyEmailRoute);
+                  }
+                  break;
               }
             },
             itemBuilder: (context) {
@@ -54,6 +64,10 @@ class _NotesViewState extends State<NotesView> {
                   value: MenuAction.logout,
                   //child is what the user sees
                   child: Text("Log out"),
+                ),
+                const PopupMenuItem<MenuAction>(
+                  value: MenuAction.verifyEmail,
+                  child: Text("Verify Email"),
                 )
               ];
             },

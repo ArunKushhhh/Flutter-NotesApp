@@ -25,6 +25,7 @@ void main() {
         loginRoute: (context) => const LoginView(),
         registerRoute: (context) => const RegisterView(),
         notesRoute: (context) => const NotesView(),
+        verifyEmailRoute: (context) => const VerifyEmailView(),
       },
     ),
   );
@@ -56,7 +57,7 @@ class HomePage extends StatelessWidget {
             if (user != null) {
               if (user.emailVerified) {
                 // print("Email is verified");
-                return const LoginView();
+                return const NotesView();
               } else {
                 return const VerifyEmailView();
               }
