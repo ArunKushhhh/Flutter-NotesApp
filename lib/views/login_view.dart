@@ -72,11 +72,20 @@ class _LoginViewState extends State<LoginView> {
                       .signInWithEmailAndPassword(
                           email: email, password: password);
                   devtools.log(userCredential.toString());
-                  // ignore: use_build_context_synchronously
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    notesRoute,
-                    (route) => false,
-                  );
+                  //before pushing the user to the main screen of the app, we need to ensure if the user is verified or not
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user?.emailVerified ?? false) {
+                    //user's email is verified
+                    // ignore: use_build_context_synchronously
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      notesRoute,
+                      (route) => false,
+                    );
+                  } else {
+                    //user's email is NOT verified
+                    // ignore: use_build_context_synchronously
+                    Navigator.of(context).pushNamed(verifyEmailRoute);
+                  }
                 }
                 //the type of excpetion is identified using the e.runtimeType method
                 on FirebaseAuthException catch (e) {
