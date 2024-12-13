@@ -6,7 +6,7 @@ abstract class AuthProvider {
   AuthUser? get currentUser;
 
   //a login function for it to allow a user to login
-  Future<AuthUser> login({
+  Future<AuthUser> logIn({
     required String email,
     required String password,
   });
@@ -23,4 +23,3 @@ abstract class AuthProvider {
   //for email verification
   Future<void> sendEmailVerification();
 }
-
