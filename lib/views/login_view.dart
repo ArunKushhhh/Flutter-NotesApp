@@ -75,7 +75,7 @@ class _LoginViewState extends State<LoginView> {
                   //     .signInWithEmailAndPassword(
                   //         email: email, password: password);
                   // devtools.log(userCredential.toString());\
-                  await AuthService.firebase().login(
+                  await AuthService.firebase().logIn(
                     email: email,
                     password: password,
                   );
@@ -139,6 +139,7 @@ class _LoginViewState extends State<LoginView> {
                 //chap: migrating to auth services
                 on UserNotFoundAuthException {
                   await showErrorDialog(
+                    // ignore: use_build_context_synchronously
                     context,
                     "User not found. Please check your email or register.",
                   );
