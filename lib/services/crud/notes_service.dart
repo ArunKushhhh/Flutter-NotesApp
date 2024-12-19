@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
@@ -25,6 +26,38 @@ import 'package:mynotes/services/crud/crud_exceptions.dart';
 //opening our Database
 class NotesService {
   Database? _db;
+  //Chap: Catching Data
+  List<DatabaseNote> _notes = [];
+  //when the list of notes changes, we need to tell our stream that something has changed which allows the UI to reactively listen to the updates
+  //we do this using stream controller
+  final _notesStreamController =
+      StreamController<List<DatabaseNote>>.broadcast();
+
+  // Chap:Caching notes
+  //currently the notes-view has no contact with the notes-services
+  Future<DatabaseUser> getOrCreateUser({required String email}) async {
+    try {
+      final user = await getUser(email: email);
+      return user;
+    } on CouldNotFindUser {
+      final createdUser = await createUser(email: email);
+      return createdUser;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  //read and cache notes
+  //using _ before a function makes it private
+  Future<void> _cacheNotes() async {
+    final allNotes = await getAllNotes();
+
+    //converting iterable notes to list
+    _notes = allNotes.toList();
+    _notesStreamController.add(_notes);
+  }
+
+//CHAP: CRUD Operations
   //update existing notes
   Future<DatabaseNote> updateNote({
     required DatabaseNote note,
@@ -32,17 +65,29 @@ class NotesService {
   }) async {
     final db = _getDatabaseOrThrow();
 
+    //make sure the note exists
     await getNote(id: note.id);
 
+    //update db
     final updatesCount = await db.update(noteTable, {
       textColumn: text,
       isSyncedWithCloudColumn: 0,
     });
 
-    if(updatesCount == 0) {
+    if (updatesCount == 0) {
       throw CouldNotUpdateNote();
     } else {
-      return await getNote(id: note.id);
+      // return await getNote(id: note.id);
+
+      //chap: caching data
+      final updatedNote = await getNote(id: note.id);
+      //remove the existing note with the new note
+      _notes.removeWhere((note) => note.id == updatedNote.id);
+      //add the note to the note array
+      _notes.add(updatedNote);
+      //update the stream
+      _notesStreamController.add(_notes);
+      return updatedNote;
     }
   }
 
@@ -71,7 +116,12 @@ class NotesService {
     if (notes.isEmpty) {
       throw CouldNotFindNote();
     } else {
-      return DatabaseNote.fromRow(notes.first);
+      // return DatabaseNote.fromRow(notes.first);
+      final note = DatabaseNote.fromRow(notes.first);
+      _notes.removeWhere((note) => note.id == id);
+      _notes.add(note);
+      _notesStreamController.add(_notes);
+      return note;
     }
   }
 
@@ -80,8 +130,15 @@ class NotesService {
     //get the db
     final db = _getDatabaseOrThrow();
 
+    //chap: caching data
+    final numberOfDeletions = await db.delete(noteTable);
+    //set the notes array to empty array
+    _notes = [];
+    //update the stream using stream controller
+    _notesStreamController.add(_notes);
     //delete the complete noteTable
-    return await db.delete(noteTable);
+    // return await db.delete(noteTable);
+    return numberOfDeletions;
   }
 
   //delete the note
@@ -95,6 +152,11 @@ class NotesService {
 
     if (deletedCount == 0) {
       throw CouldNotDeleteNote();
+    }
+    //chap:caching data
+    else {
+      _notes.removeWhere((note) => note.id == id);
+      _notesStreamController.add(_notes);
     }
   }
 
@@ -124,6 +186,10 @@ class NotesService {
       text: text,
       isSyncedWithCloud: true,
     );
+
+    //chap: Caching Notes
+    _notes.add(note);
+    _notesStreamController.add(_notes);
 
     //return the note to your database
     return note;
@@ -219,7 +285,7 @@ class NotesService {
     }
   }
 
-  //opne the db
+  //open the db
   Future<void> open() async {
     if (_db != null) {
       throw DatabaseAlreadyOpenException();
@@ -249,6 +315,9 @@ class NotesService {
       //   FOREIGN KEY("user_id") REFERENCES "user"("id")
       //   );''';
       await db.execute(createNoteTable);
+
+      //CHAP:CACHING DATA
+      await _cacheNotes();
     } on MissingPlatformDirectoryException {
       throw UnableToGetDocumentsDirectory();
     }
